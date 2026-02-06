@@ -9,6 +9,7 @@ import { log } from '../utils/logger';
 
 let mainWindow: BrowserWindow | null = null;
 let lastMessageCount = 0;
+let isWindowFocused = false;
 
 export function createMainWindow(tray: Electron.Tray | null, isQuitting: () => boolean): BrowserWindow {
     mainWindow = new BrowserWindow({
@@ -23,13 +24,19 @@ export function createMainWindow(tray: Electron.Tray | null, isQuitting: () => b
     setupLoadingIndicators(webContents);
     setupMessageCountMonitor(webContents, tray);
     setupNavigationHandlers(webContents);
-
+    
     // Reset message count when window gains focus
     mainWindow.on('focus', () => {
-        log('Window focused - resetting message count');
+        // log('Window focused - resetting message count');
         resetMessageCount(tray);
+        isWindowFocused = true;
     });
 
+    mainWindow.on('blur', () => {
+        // log('Window blurred');
+        isWindowFocused = false;
+    });
+    
     // Don't await - let ready-to-show event trigger
     mainWindow.loadURL(MESSENGER_URL);
 
@@ -109,33 +116,31 @@ function setupLoadingIndicators(webContents: Electron.WebContents): void {
 
 function setupMessageCountMonitor(webContents: Electron.WebContents, tray: Electron.Tray | null): void {
     webContents.on('page-title-updated', (event, title) => {
+        if (isWindowFocused) {
+            log('Window is focused - skipping message count update');
+            resetMessageCount(tray);
+            return;
+        }
         const match = title.match(/\((\d+)\)/);
 
         if (match) {
-            const messageCount = parseInt(match[1], 10);
-            log('Message count detected:' + messageCount + ', Last count:' + lastMessageCount);
-
-            if (messageCount > lastMessageCount && lastMessageCount >= 0) {
-                const newMessages = messageCount - lastMessageCount;
-                log('Sending notification for ' + newMessages + ' new messages');
-
-                if (process.platform === 'win32' && tray && !tray.isDestroyed()) {
-                    tray.displayBalloon({
-                        title: 'Messenger',
-                        content: `${newMessages} new message${newMessages > 1 ? 's' : ''} received`,
-                        icon: WINDOW_CONFIG.main.icon as string
-                    });
-                }
+            lastMessageCount++;
+            log('Sending notification for ' + lastMessageCount + ' new messages');
+            if (process.platform === 'win32' && tray && !tray.isDestroyed()) {
+                tray.displayBalloon({
+                    title: 'Messenger',
+                    content: `${lastMessageCount} new message${lastMessageCount > 1 ? 's' : ''} received`,
+                    icon: WINDOW_CONFIG.main.icon as string
+                });
             }
 
-            lastMessageCount = messageCount;
 
             if (tray && !tray.isDestroyed()) {
-                tray.setToolTip(messageCount > 0 ? `Messenger (${messageCount} unread)` : 'Messenger');
+                tray.setToolTip(lastMessageCount > 0 ? `Messenger (${lastMessageCount} unread)` : 'Messenger');
             }
 
             if (process.platform === 'win32') {
-                updateTaskbarBadge(mainWindow, messageCount);
+                updateTaskbarBadge(mainWindow, lastMessageCount);
             }
         } else if (title === APP_TITLE) {
             lastMessageCount = 0;

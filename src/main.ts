@@ -6,6 +6,7 @@ import { createTray } from './managers/tray';
 import { setupAutoUpdater } from './managers/auto-updater';
 import { setupMenuBar } from './managers/app-menu';
 import { initializeLogger, log } from './utils/logger';
+import { getSettings, isPortable } from './managers/settings';
 
 // Application state
 let mainWindow: BrowserWindow | null = null;
@@ -59,6 +60,17 @@ async function initializeApp(): Promise<void> {
         // Initialize logger
         initializeLogger();
 
+        // Handle auto startup (only for packaged, non-portable apps)
+        const settings = getSettings();
+        if (!isPortable() && app.isPackaged) {
+            if (settings.autoStartup) {
+                app.setLoginItemSettings({
+                    openAtLogin: true,
+                    openAsHidden: settings.startMinimized
+                });
+            }
+        }
+
         // Create splash window
         splashWindow = createSplashWindow();
 
@@ -77,7 +89,12 @@ async function initializeApp(): Promise<void> {
                 splashWindow = null;
             }
             if (mainWindow) {
-                mainWindow.show();
+                // Check if should start minimized
+                if (settings.startMinimized) {
+                    mainWindow.minimize();
+                } else {
+                    mainWindow.show();
+                }
             }
         });
 
