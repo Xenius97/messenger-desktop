@@ -1,4 +1,5 @@
 import { BrowserWindow } from 'electron';
+import path from 'path';
 import { WINDOW_CONFIG } from '../config/windows';
 import { PROGRESS_WINDOW_DELAY } from '../config/constants';
 import { log } from '../utils/logger';
@@ -11,6 +12,7 @@ export async function createUpdateProgressWindow(): Promise<BrowserWindow> {
         webPreferences: {
             contextIsolation: false,
             nodeIntegration: true,
+            preload: path.join(__dirname, '../preload/update-progress.js'),
         },
     });
 
@@ -26,9 +28,7 @@ export async function createUpdateProgressWindow(): Promise<BrowserWindow> {
         });
 
         updateProgressWindow.webContents.once('did-finish-load', () => {
-            log('did-finish-load event fired, requesting DevTools...');
-            // Open DevTools for debugging
-            updateProgressWindow.webContents.openDevTools({ mode: 'detach' });
+            log('did-finish-load event fired');
             
             setTimeout(() => {
                 log('Resolving with update progress window');

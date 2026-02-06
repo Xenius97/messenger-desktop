@@ -84,7 +84,18 @@ function setupUpdateEvents(): void {
 
         if (updateProgressWindow && !updateProgressWindow.isDestroyed()) {
             log('Sending progress to window...');
-            updateProgressWindow.webContents.send('download-progress', progressObj);
+            updateProgressWindow.webContents.executeJavaScript(`
+                if (window.updateAPI && window.updateAPI.updateProgress) {
+                    window.updateAPI.updateProgress(
+                        Math.round(${progressObj.percent}),
+                        ${progressObj.transferred},
+                        ${progressObj.total},
+                        ${progressObj.bytesPerSecond}
+                    );
+                } else {
+                    console.warn('updateAPI not available:', window.updateAPI);
+                }
+            `);
         } else {
             console.warn('Update progress window not available!', {
                 exists: !!updateProgressWindow,
@@ -102,7 +113,11 @@ function setupUpdateEvents(): void {
             log('No progress events received - cached download');
             simulateCachedDownload();
         } else if (updateProgressWindow && !updateProgressWindow.isDestroyed()) {
-            updateProgressWindow.webContents.send('update-downloaded');
+            updateProgressWindow.webContents.executeJavaScript(`
+                if (window.updateAPI && window.updateAPI.downloadComplete) {
+                    window.updateAPI.downloadComplete();
+                }
+            `);
         } else {
             showUpdateReadyDialog();
         }
@@ -175,15 +190,18 @@ function simulateCachedDownload(): void {
     // Wait a bit so user sees the window
     setTimeout(() => {
         if (updateProgressWindow && !updateProgressWindow.isDestroyed()) {
-            updateProgressWindow.webContents.send('download-progress', {
-                percent: 100,
-                transferred: 1,
-                total: 1,
-                bytesPerSecond: 0
-            });
+            updateProgressWindow.webContents.executeJavaScript(`
+                if (window.updateAPI && window.updateAPI.updateProgress) {
+                    window.updateAPI.updateProgress(100, 1, 1, 0);
+                }
+            `);
             setTimeout(() => {
                 if (updateProgressWindow && !updateProgressWindow.isDestroyed()) {
-                    updateProgressWindow.webContents.send('update-downloaded');
+                    updateProgressWindow.webContents.executeJavaScript(`
+                        if (window.updateAPI && window.updateAPI.downloadComplete) {
+                            window.updateAPI.downloadComplete();
+                        }
+                    `);
                 }
             }, CACHED_DOWNLOAD_UPDATE_DELAY);
         }

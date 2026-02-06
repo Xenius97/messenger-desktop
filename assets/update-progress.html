@@ -27,9 +27,11 @@
             border-radius: 10px;
             overflow: hidden;
             margin-bottom: 15px;
+            position: relative;
+            height: 30px;
         }
         .progress-bar {
-            height: 30px;
+            height: 100%;
             background: linear-gradient(90deg, #00aaff, #0088cc);
             width: 0%;
             transition: width 0.3s ease;
@@ -39,6 +41,22 @@
             color: white;
             font-weight: bold;
             font-size: 14px;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+        .progress-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-weight: bold;
+            font-size: 14px;
+            width: 100%;
+            text-align: center;
+            z-index: 10;
+            mix-blend-mode: screen;
         }
         .status {
             color: #888;
@@ -83,7 +101,8 @@
 <body>
     <h2>Update Downloading...</h2>
     <div class="progress-container">
-        <div class="progress-bar" id="progressBar">0%</div>
+        <div class="progress-bar" id="progressBar"></div>
+        <div class="progress-text" id="progressText">0%</div>
     </div>
     <div class="status" id="status">Preparing download...</div>
     <div class="buttons" id="buttons">
@@ -96,26 +115,7 @@
         const { ipcRenderer } = require('electron');
         console.log('IPC Renderer available:', !!ipcRenderer);
         
-        // Setup download progress listener
-        ipcRenderer.on('download-progress', (event, progress) => {
-            console.log('Received download-progress event:', progress.percent);
-            const percent = Math.round(progress.percent);
-            document.getElementById('progressBar').style.width = percent + '%';
-            document.getElementById('progressBar').textContent = percent + '%';
-            document.getElementById('status').textContent = 
-                'Downloading: ' + formatBytes(progress.transferred) + ' / ' + formatBytes(progress.total);
-        });
-        
-        // Setup update downloaded listener
-        ipcRenderer.on('update-downloaded', () => {
-            console.log('Received update-downloaded event');
-            document.querySelector('h2').textContent = 'Update Ready!';
-            document.getElementById('progressBar').style.width = '100%';
-            document.getElementById('progressBar').textContent = '100%';
-            document.getElementById('status').textContent = 'Update downloaded successfully!';
-            document.getElementById('buttons').classList.add('show');
-        });
-        
+        // Fallback for formatBytes (also injected, but define here too)
         function formatBytes(bytes) {
             if (bytes === 0) return '0 Bytes';
             const k = 1024;

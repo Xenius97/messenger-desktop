@@ -10,7 +10,7 @@ export function initializeLogger(): void {
     
     if (!isDev) {
         // Create logs directory
-        const logsDir = path.join(app.getPath('userData'), 'logs');
+        const logsDir = path.join(app.getPath('userData'), 'UserLogs');
         if (!fs.existsSync(logsDir)) {
             fs.mkdirSync(logsDir, { recursive: true });
         }
