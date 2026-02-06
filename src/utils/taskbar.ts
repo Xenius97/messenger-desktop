@@ -1,4 +1,5 @@
 import { BrowserWindow, nativeImage } from 'electron';
+import { log } from '../utils/logger';
 
 export function updateTaskbarBadge(window: BrowserWindow | null, count: number): void {
     if (process.platform !== 'win32' || !window || window.isDestroyed()) {
@@ -31,7 +32,7 @@ export function updateTaskbarBadge(window: BrowserWindow | null, count: number):
 
         const image = nativeImage.createFromDataURL(canvas.toDataURL());
         window.setOverlayIcon(image, `${count} unread messages`);
-    } catch (error) {
-        console.error('Failed to update taskbar badge:', error);
+    } catch (err: any) {
+        log('Failed to update taskbar badge:' + err.message);
     }
 }

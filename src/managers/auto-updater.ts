@@ -1,15 +1,11 @@
 import { app, dialog, ipcMain, BrowserWindow } from 'electron';
 import { autoUpdater } from 'electron-updater';
 import path from 'path';
-import { 
-    UPDATE_CHECK_DELAY, 
-    DOWNLOAD_TIMEOUT, 
-    CACHED_DOWNLOAD_DELAY, 
-    CACHED_DOWNLOAD_UPDATE_DELAY 
-} from '../config/constants';
+import { UPDATE_CHECK_DELAY, DOWNLOAD_TIMEOUT, CACHED_DOWNLOAD_DELAY, CACHED_DOWNLOAD_UPDATE_DELAY } from '../config/constants';
 import { UpdateProgress } from '../types';
 import { createUpdateProgressWindow } from '../windows/update-progress';
 import { getMainWindow } from '../windows/main';
+import { log } from '../utils/logger';
 
 let updateProgressWindow: BrowserWindow | null = null;
 let downloadTimeout: NodeJS.Timeout | null = null;
@@ -18,7 +14,7 @@ let downloadStarted = false;
 export function setupAutoUpdater(): void {
     // Auto updater only works in packaged app
     if (process.env.NODE_ENV === 'development' || !app.isPackaged) {
-        console.log('Auto updater disabled in development mode');
+        log('Auto updater disabled in development mode');
         return;
     }
 
@@ -27,7 +23,7 @@ export function setupAutoUpdater(): void {
 
     // Log cache path
     const updateCachePath = path.join(app.getPath('userData'), '..', 'messenger-desktop-updater');
-    console.log('Update cache directory:', updateCachePath);
+    log('Update cache directory:' + updateCachePath);
 
     autoUpdater.setFeedURL({
         provider: 'github',
@@ -37,7 +33,7 @@ export function setupAutoUpdater(): void {
     });
 
     setTimeout(() => {
-        console.log('Checking for updates...');
+        log('Checking for updates...');
         autoUpdater.checkForUpdates().catch(err => {
             console.error('Failed to check for updates:', err);
         });
@@ -49,15 +45,15 @@ export function setupAutoUpdater(): void {
 
 function setupUpdateEvents(): void {
     autoUpdater.on('checking-for-update', () => {
-        console.log('Checking for updates...');
+        log('Checking for updates...');
     });
 
     autoUpdater.on('update-not-available', (info) => {
-        console.log('Update not available. Current version:', info.version);
+        log('Update not available. Current version:' + info.version);
     });
 
     autoUpdater.on('update-available', async (info) => {
-        console.log('Update available:', info.version);
+        log('Update available:' + info.version);
         const mainWindow = getMainWindow();
         if (!mainWindow) return;
 
@@ -75,8 +71,8 @@ function setupUpdateEvents(): void {
     });
 
     autoUpdater.on('download-progress', (progressObj: UpdateProgress) => {
-        console.log('Download progress:', Math.round(progressObj.percent) + '% -',
-            Math.round(progressObj.bytesPerSecond / 1024), 'KB/s');
+        log('Download progress event received: ' + Math.round(progressObj.percent) + '% - ' +
+            Math.round(progressObj.bytesPerSecond / 1024) + ' KB/s');
 
         if (!downloadStarted) {
             downloadStarted = true;
@@ -87,17 +83,23 @@ function setupUpdateEvents(): void {
         }
 
         if (updateProgressWindow && !updateProgressWindow.isDestroyed()) {
+            log('Sending progress to window...');
             updateProgressWindow.webContents.send('download-progress', progressObj);
+        } else {
+            console.warn('Update progress window not available!', {
+                exists: !!updateProgressWindow,
+                destroyed: updateProgressWindow?.isDestroyed()
+            });
         }
     });
 
     autoUpdater.on('update-downloaded', (info) => {
-        console.log('Update downloaded successfully:', info.version);
+        log('Update downloaded successfully:' + info.version);
         clearDownloadTimeout();
 
         // Handle cached download (no progress events)
         if (!downloadStarted && updateProgressWindow && !updateProgressWindow.isDestroyed()) {
-            console.log('No progress events received - cached download');
+            log('No progress events received - cached download');
             simulateCachedDownload();
         } else if (updateProgressWindow && !updateProgressWindow.isDestroyed()) {
             updateProgressWindow.webContents.send('update-downloaded');
@@ -107,7 +109,7 @@ function setupUpdateEvents(): void {
     });
 
     autoUpdater.on('error', (error) => {
-        console.error('Update error:', error);
+        log('Update error:' + error.message);
         clearDownloadTimeout();
         
         if (updateProgressWindow && !updateProgressWindow.isDestroyed()) {
@@ -134,17 +136,18 @@ function setupIpcHandlers(): void {
 }
 
 async function startDownload(): Promise<void> {
-    console.log('Starting update download...');
+    log('Starting update download...');
     downloadStarted = false;
 
     // Wait for progress window to be ready
     updateProgressWindow = await createUpdateProgressWindow();
-    console.log('Progress window ready');
+    log('Progress window created and ready');
+    log('Window ID: ' + updateProgressWindow?.id);
 
     // Setup timeout for stuck downloads
     downloadTimeout = setTimeout(() => {
         if (!downloadStarted) {
-            console.error('Download timeout - no progress received');
+            log('Download timeout - no progress received');
             if (updateProgressWindow && !updateProgressWindow.isDestroyed()) {
                 updateProgressWindow.close();
                 updateProgressWindow = null;
@@ -155,9 +158,10 @@ async function startDownload(): Promise<void> {
     }, DOWNLOAD_TIMEOUT);
 
     try {
+        log('Calling autoUpdater.downloadUpdate()');
         await autoUpdater.downloadUpdate();
     } catch (err: any) {
-        console.error('Download failed:', err);
+        log('Download failed: ' + err.message);
         clearDownloadTimeout();
         if (updateProgressWindow && !updateProgressWindow.isDestroyed()) {
             updateProgressWindow.close();

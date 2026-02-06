@@ -5,6 +5,7 @@ import { isMessengerUrl, isFacebookUrl } from '../utils/url';
 import { startLoadingAnimation, stopLoadingAnimation } from '../utils/animation';
 import { updateTaskbarBadge } from '../utils/taskbar';
 import { createExternalWindow } from './external';
+import { log } from '../utils/logger';
 
 let mainWindow: BrowserWindow | null = null;
 let lastMessageCount = 0;
@@ -106,11 +107,11 @@ function setupMessageCountMonitor(webContents: Electron.WebContents, tray: Elect
 
         if (match) {
             const messageCount = parseInt(match[1], 10);
-            console.log('Message count detected:', messageCount, 'Last count:', lastMessageCount);
+            log('Message count detected:' + messageCount + ', Last count:' + lastMessageCount);
 
             if (messageCount > lastMessageCount && lastMessageCount >= 0) {
                 const newMessages = messageCount - lastMessageCount;
-                console.log('Sending notification for', newMessages, 'new messages');
+                log('Sending notification for ' + newMessages + ' new messages');
 
                 if (process.platform === 'win32' && tray && !tray.isDestroyed()) {
                     tray.displayBalloon({

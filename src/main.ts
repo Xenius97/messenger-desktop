@@ -4,6 +4,7 @@ import { createMainWindow } from './windows/main';
 import { createSplashWindow } from './windows/splash';
 import { createTray } from './managers/tray';
 import { setupAutoUpdater } from './managers/auto-updater';
+import { initializeLogger, log } from './utils/logger';
 
 // Application state
 let mainWindow: BrowserWindow | null = null;
@@ -54,6 +55,9 @@ app.on('window-all-closed', () => {
 // Initialize application
 async function initializeApp(): Promise<void> {
     try {
+        // Initialize logger
+        initializeLogger();
+
         // Create splash window
         splashWindow = createSplashWindow();
 
@@ -79,8 +83,8 @@ async function initializeApp(): Promise<void> {
         // Setup auto updater
         setupAutoUpdater();
 
-    } catch (error) {
-        console.error('Failed to initialize app:', error);
+    } catch (err: any) {
+        log('Failed to initialize app:' + err.message);
         app.quit();
     }
 }
