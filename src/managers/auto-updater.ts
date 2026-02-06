@@ -114,7 +114,7 @@ function setupUpdateEvents(): void {
         }
 
         if (updateProgressWindow && !updateProgressWindow.isDestroyed()) {
-            log('Sending progress to window...');
+            // log('Sending progress to window...');
             updateProgressWindow.webContents.executeJavaScript(`
                 if (window.updateAPI && window.updateAPI.updateProgress) {
                     window.updateAPI.updateProgress(
@@ -182,13 +182,13 @@ function setupIpcHandlers(): void {
 }
 
 async function startDownload(): Promise<void> {
-    log('Starting update download...');
+    // log('Starting update download...');
     downloadStarted = false;
 
     // Wait for progress window to be ready
     updateProgressWindow = await createUpdateProgressWindow();
-    log('Progress window created and ready');
-    log('Window ID: ' + updateProgressWindow?.id);
+    // log('Progress window created and ready');
+    // log('Window ID: ' + updateProgressWindow?.id);
 
     // Setup timeout for stuck downloads
     downloadTimeout = setTimeout(() => {
@@ -204,7 +204,7 @@ async function startDownload(): Promise<void> {
     }, DOWNLOAD_TIMEOUT);
 
     try {
-        log('Calling autoUpdater.downloadUpdate()');
+        // log('Calling autoUpdater.downloadUpdate()');
         await autoUpdater.downloadUpdate();
     } catch (err: any) {
         log('Download failed: ' + err.message);

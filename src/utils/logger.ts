@@ -18,6 +18,16 @@ export function initializeLogger(): void {
         // Create log file with timestamp
         const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
         logPath = path.join(logsDir, `messenger-${timestamp}.log`);
+        
+        // Delete files older than 1 week
+        const oneWeekAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
+        fs.readdirSync(logsDir).forEach(file => {
+            const filePath = path.join(logsDir, file);
+            const stats = fs.statSync(filePath);
+            if (stats.mtimeMs < oneWeekAgo) {
+                fs.unlinkSync(filePath);
+            }
+        });
     }
 }
 

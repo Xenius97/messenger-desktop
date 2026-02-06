@@ -38,7 +38,7 @@ export function createAppMenu(mainWindow: BrowserWindow | null): Menu {
                         if (mainWindow) {
                             const current = mainWindow.webContents.getZoomLevel();
                             mainWindow.webContents.setZoomLevel(current + 0.5);
-                            log('Zoomed in: ' + (current + 0.5));
+                            // log('Zoomed in: ' + (current + 0.5));
                         }
                     }
                 },
@@ -49,7 +49,7 @@ export function createAppMenu(mainWindow: BrowserWindow | null): Menu {
                         if (mainWindow) {
                             const current = mainWindow.webContents.getZoomLevel();
                             mainWindow.webContents.setZoomLevel(Math.max(current - 0.5, -3));
-                            log('Zoomed out: ' + Math.max(current - 0.5, -3));
+                            // log('Zoomed out: ' + Math.max(current - 0.5, -3));
                         }
                     }
                 },
@@ -59,7 +59,7 @@ export function createAppMenu(mainWindow: BrowserWindow | null): Menu {
                     click: () => {
                         if (mainWindow) {
                             mainWindow.webContents.setZoomLevel(0);
-                            log('Zoom reset');
+                            // log('Zoom reset');
                         }
                     }
                 },
@@ -75,7 +75,7 @@ export function createAppMenu(mainWindow: BrowserWindow | null): Menu {
                 {
                     label: 'Check for Updates...',
                     click: () => {
-                        log('Manual update check initiated');
+                        // log('Manual update check initiated');
                         autoUpdater.checkForUpdates().catch(err => {
                             log('Update check failed: ' + err.message);
                         });
@@ -91,7 +91,7 @@ export function createAppMenu(mainWindow: BrowserWindow | null): Menu {
                         autoUpdater.autoInstallOnAppQuit = enabled;
                         const label = enabled ? 'Auto Update: ON' : 'Auto Update: OFF';
                         menuItem.label = label;
-                        log('Auto updater ' + (enabled ? 'enabled' : 'disabled'));
+                        // log('Auto updater ' + (enabled ? 'enabled' : 'disabled'));
 
                         if (!enabled) {
                             dialog.showMessageBox(mainWindow!, {
@@ -128,5 +128,5 @@ export function setupMenuBar(mainWindow: BrowserWindow | null): void {
     
     const appMenu = createAppMenu(mainWindow);
     Menu.setApplicationMenu(appMenu);
-    log('Application menu initialized');
+    // log('Application menu initialized');
 }

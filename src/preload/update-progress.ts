@@ -3,7 +3,7 @@ import { ipcRenderer } from 'electron';
 // Make updateAPI available BEFORE any HTML execution
 (window as any).updateAPI = {
     updateProgress: function(percent: number, transferred: number, total: number, speed: number) {
-        console.log('updateProgress called:', percent, '%');
+        // console.log('updateProgress called:', percent, '%');
         const progressBar = document.getElementById('progressBar');
         const progressText = document.getElementById('progressText');
         
@@ -29,7 +29,7 @@ import { ipcRenderer } from 'electron';
     },
     
     downloadComplete: function() {
-        console.log('downloadComplete called');
+        // console.log('downloadComplete called');
         const heading = document.querySelector('h2');
         const progressBar = document.getElementById('progressBar');
         const progressText = document.getElementById('progressText');
@@ -44,6 +44,6 @@ import { ipcRenderer } from 'electron';
     }
 };
 
-console.log('Preload: updateAPI initialized');
+// console.log('Preload: updateAPI initialized');
 
 (window as any).ipcRenderer = ipcRenderer;
