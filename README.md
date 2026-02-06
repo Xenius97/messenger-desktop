@@ -1,6 +1,4 @@
-# Messenger Desktop - TypeScript Edition
-
-Modern Messenger Desktop application built with Electron and TypeScript.
+# Messenger Desktop
 
 ## Features
 
@@ -12,7 +10,7 @@ Modern Messenger Desktop application built with Electron and TypeScript.
 
 ## Development
 
-### Prerequisites
+### Requirements
 
 - Node.js 18+
 - npm or yarn
