@@ -6,7 +6,7 @@ import { log } from '../utils/logger';
 export function createAppMenu(mainWindow: BrowserWindow | null): Menu {
     const template: (MenuItem | {})[] = [
         {
-            label: 'File',
+            label: 'Application',
             submenu: [
                 {
                     label: 'Exit',
@@ -82,9 +82,9 @@ export function createAppMenu(mainWindow: BrowserWindow | null): Menu {
                     }
                 },
                 {
-                    label: 'Auto Update: ' + (autoUpdater.autoDownload ? 'ON' : 'OFF'),
+                    label: 'Auto Update: ON',
                     type: 'checkbox',
-                    checked: true,
+                    checked: autoUpdater.autoDownload ? true : false,
                     click: (menuItem: MenuItem) => {
                         const enabled = menuItem.checked;
                         autoUpdater.autoDownload = enabled;

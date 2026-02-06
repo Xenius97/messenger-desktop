@@ -1,7 +1,7 @@
-import { app, dialog, ipcMain, BrowserWindow } from 'electron';
+import { app, dialog, ipcMain, BrowserWindow, shell } from 'electron';
 import { autoUpdater } from 'electron-updater';
 import path from 'path';
-import { UPDATE_CHECK_DELAY, DOWNLOAD_TIMEOUT, CACHED_DOWNLOAD_DELAY, CACHED_DOWNLOAD_UPDATE_DELAY } from '../config/constants';
+import { UPDATE_CHECK_DELAY, DOWNLOAD_TIMEOUT, CACHED_DOWNLOAD_DELAY, CACHED_DOWNLOAD_UPDATE_DELAY, APP_REPOSITORY } from '../config/constants';
 import { UpdateProgress } from '../types';
 import { createUpdateProgressWindow } from '../windows/update-progress';
 import { getMainWindow } from '../windows/main';
@@ -11,14 +11,26 @@ let updateProgressWindow: BrowserWindow | null = null;
 let downloadTimeout: NodeJS.Timeout | null = null;
 let downloadStarted = false;
 
+// Helper to detect portable version
+function isPortableVersion(): boolean {
+    return !!process.env.PORTABLE_EXECUTABLE_DIR;
+}
+
 export function setupAutoUpdater(): void {
-    // Auto updater only works in packaged app
+    // Auto updater only works in packaged app (and only auto-download in installer)
     if (process.env.NODE_ENV === 'development' || !app.isPackaged) {
         log('Auto updater disabled in development mode');
         return;
     }
 
-    autoUpdater.autoDownload = false;
+    const isPortable = isPortableVersion();
+    if (isPortable) {
+        log('Portable version: update check enabled, automatic download disabled');
+    } else {
+        log('Installer version: full auto-update enabled');
+    }
+
+    autoUpdater.autoDownload = !isPortable;  // Only auto-download for installers
     autoUpdater.logger = console;
 
     // Log cache path
@@ -57,16 +69,35 @@ function setupUpdateEvents(): void {
         const mainWindow = getMainWindow();
         if (!mainWindow) return;
 
-        const result = await dialog.showMessageBox(mainWindow, {
-            type: 'info',
-            title: 'Update Available',
-            message: `A new version (${info.version}) is available!`,
-            detail: 'Do you want to download and install the update?',
-            buttons: ['Not Now', 'OK']
-        });
+        const isPortable = isPortableVersion();
+        log('Update type: ' + (isPortable ? 'Portable' : 'Installer'));
 
-        if (result.response === 1) {
-            await startDownload();
+        if (isPortable) {
+            // Portable: show message with link to releases
+            const result = await dialog.showMessageBox(mainWindow, {
+                type: 'info',
+                title: 'Update Available',
+                message: `A new version (${info.version}) is available!`,
+                detail: 'This is a portable version. Please download the new version manually from the releases page.',
+                buttons: ['Later', 'Go to Releases']
+            });
+
+            if (result.response === 1) {
+                await shell.openExternal(APP_REPOSITORY + '/releases');
+            }
+        } else {
+            // Installer: show download and install option
+            const result = await dialog.showMessageBox(mainWindow, {
+                type: 'info',
+                title: 'Update Available',
+                message: `A new version (${info.version}) is available!`,
+                detail: 'Do you want to download and install the update?',
+                buttons: ['Not Now', 'OK']
+            });
+
+            if (result.response === 1) {
+                await startDownload();
+            }
         }
     });
 
