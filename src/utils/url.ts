@@ -16,7 +16,7 @@ export function isFacebookUrl(url: string): boolean {
     try {
         const parsedUrl = new URL(url);
         console.log('Parsed URL:', parsedUrl.hostname);
-        return parsedUrl.hostname === 'facebook.com';
+        return parsedUrl.hostname === 'facebook.com' || parsedUrl.hostname === 'www.facebook.com';
     } catch (error) {
         return false;
     }

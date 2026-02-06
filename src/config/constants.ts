@@ -1,10 +1,10 @@
 export const APP_TITLE = 'Messenger';
 export const APP_VERSION = require('../../package.json').version;
 export const APP_REPOSITORY = require('../../package.json').repository.url;
-export const MESSENGER_URL = 'https://www.messenger.com';
-export const LOADING_ANIMATION_INTERVAL = 400;
+export const MESSENGER_URL = 'https://www.messenger.com/login/';
+export const LOADING_ANIMATION_INTERVAL = 200;
 export const LOADING_DOT_COUNT = 4;
-export const UPDATE_CHECK_DELAY = 4000;
+export const UPDATE_CHECK_DELAY = 5000;
 export const DOWNLOAD_TIMEOUT = 30000;
 export const PROGRESS_WINDOW_DELAY = 100;
 export const CACHED_DOWNLOAD_DELAY = 300;

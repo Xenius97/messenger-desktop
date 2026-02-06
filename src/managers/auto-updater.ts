@@ -6,6 +6,7 @@ import { UpdateProgress } from '../types';
 import { createUpdateProgressWindow } from '../windows/update-progress';
 import { getMainWindow } from '../windows/main';
 import { log } from '../utils/logger';
+import { getSettings } from '../managers/settings';
 
 let updateProgressWindow: BrowserWindow | null = null;
 let downloadTimeout: NodeJS.Timeout | null = null;
@@ -24,13 +25,17 @@ export function setupAutoUpdater(): void {
     }
 
     const isPortable = isPortableVersion();
+    const settings = getSettings();
+    
     if (isPortable) {
         log('Portable version: update check enabled, automatic download disabled');
     } else {
         log('Installer version: full auto-update enabled');
     }
 
-    autoUpdater.autoDownload = !isPortable;  // Only auto-download for installers
+    // Respect user settings
+    autoUpdater.autoDownload = !isPortable && settings.autoUpdate;
+    autoUpdater.autoInstallOnAppQuit = !isPortable && settings.autoUpdate;
     autoUpdater.logger = console;
 
     // Log cache path
