@@ -73,6 +73,15 @@ export function createAppMenu(mainWindow: BrowserWindow | null): Menu {
                         log('Start minimized: ' + (menuItem.checked ? 'enabled' : 'disabled'));
                     }
                 },
+                {
+                    label: 'Minimize to Tray',
+                    type: 'checkbox',
+                    checked: settings.minimizeToTray,
+                    click: (menuItem: MenuItem) => {
+                        setSetting('minimizeToTray', menuItem.checked);
+                        log('Minimize to tray: ' + (menuItem.checked ? 'enabled' : 'disabled'));
+                    }
+                },
                 { type: 'separator' },
                 {
                     label: 'Reset Cache',

@@ -1,4 +1,4 @@
-import { BrowserWindow, Menu, shell, Session } from 'electron';
+import { BrowserWindow, Menu, shell, Session, app } from 'electron';
 import { WINDOW_CONFIG, WEB_PREFERENCES } from '../config/windows';
 import { MESSENGER_URL, APP_TITLE } from '../config/constants';
 import { isMessengerUrl, isFacebookUrl } from '../utils/url';
@@ -6,6 +6,7 @@ import { startLoadingAnimation, stopLoadingAnimation } from '../utils/animation'
 import { updateTaskbarBadge } from '../utils/taskbar';
 import { createExternalWindow } from './external';
 import { log } from '../utils/logger';
+import { getSettings } from '../managers/settings';
 
 let mainWindow: BrowserWindow | null = null;
 let lastMessageCount = 0;
@@ -44,10 +45,16 @@ export function createMainWindow(tray: Electron.Tray | null, isQuitting: () => b
     mainWindow.on('close', (event) => {
         if (!isQuitting() && mainWindow) {
             event.preventDefault();
-            mainWindow.hide();
-
-            if (process.platform === 'win32') {
-                mainWindow.setSkipTaskbar(true);
+            
+            // Get current settings at runtime
+            const currentSettings = getSettings();
+            if (currentSettings.minimizeToTray) {
+                mainWindow.hide();
+                if (process.platform === 'win32') {
+                    mainWindow.setSkipTaskbar(true);
+                }
+            } else {
+                app.quit();
             }
         }
     });
