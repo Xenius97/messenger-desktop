@@ -1,6 +1,6 @@
-import { Menu, MenuItem, BrowserWindow, app, ipcMain } from 'electron';
+import { Menu, MenuItem, BrowserWindow, app, dialog } from 'electron';
 import { autoUpdater } from 'electron-updater';
-import { APP_VERSION } from '../config/constants';
+import { APP_VERSION, APP_REPOSITORY } from '../config/constants';
 import { log } from '../utils/logger';
 
 export function createAppMenu(mainWindow: BrowserWindow | null): Menu {
@@ -70,7 +70,7 @@ export function createAppMenu(mainWindow: BrowserWindow | null): Menu {
             ]
         },
         {
-            label: 'Update',
+            label: 'Help',
             submenu: [
                 {
                     label: 'Check for Updates...',
@@ -82,7 +82,7 @@ export function createAppMenu(mainWindow: BrowserWindow | null): Menu {
                     }
                 },
                 {
-                    label: 'Auto Update: ON',
+                    label: 'Auto Update: ' + (autoUpdater.autoDownload ? 'ON' : 'OFF'),
                     type: 'checkbox',
                     checked: true,
                     click: (menuItem: MenuItem) => {
@@ -92,26 +92,31 @@ export function createAppMenu(mainWindow: BrowserWindow | null): Menu {
                         const label = enabled ? 'Auto Update: ON' : 'Auto Update: OFF';
                         menuItem.label = label;
                         log('Auto updater ' + (enabled ? 'enabled' : 'disabled'));
+
+                        if (!enabled) {
+                            dialog.showMessageBox(mainWindow!, {
+                                type: 'info',
+                                title: 'Auto Update',
+                                message: 'Auto update has been disabled.',
+                                detail: 'The application will no longer automatically download updates. You can still check for updates manually from this menu.',
+                                buttons: ['OK']
+                            });
+                        }
                     }
                 },
                 { type: 'separator' },
                 {
+                    label: 'Open Repository',
+                    click: () => {
+                        require('electron').shell.openExternal(APP_REPOSITORY);
+                    }
+                },
+                {
                     label: 'Version: ' + APP_VERSION,
                     enabled: false
-                }
+                },
             ]
-        },
-        /*{
-            label: 'Help',
-            submenu: [
-                {
-                    label: 'About Messenger Desktop',
-                    click: () => {
-                        log('About clicked');
-                    }
-                }
-            ]
-        }*/
+        }
     ];
 
     const menu = Menu.buildFromTemplate(template as any);

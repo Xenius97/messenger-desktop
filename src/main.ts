@@ -4,7 +4,6 @@ import { createMainWindow } from './windows/main';
 import { createSplashWindow } from './windows/splash';
 import { createTray } from './managers/tray';
 import { setupAutoUpdater } from './managers/auto-updater';
-import { setupImageHandlers } from './managers/image-handler';
 import { setupMenuBar } from './managers/app-menu';
 import { initializeLogger, log } from './utils/logger';
 
@@ -84,10 +83,7 @@ async function initializeApp(): Promise<void> {
 
         // Setup auto updater
         setupAutoUpdater();
-
-        // Setup image handlers
-        setupImageHandlers();
-
+        
         // Setup menu bar
         setupMenuBar(mainWindow);
 
