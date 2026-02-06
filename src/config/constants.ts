@@ -1,4 +1,5 @@
 export const APP_TITLE = 'Messenger';
+export const APP_VERSION = require('../../package.json').version;
 export const MESSENGER_URL = 'https://www.messenger.com';
 export const LOADING_ANIMATION_INTERVAL = 400;
 export const LOADING_DOT_COUNT = 4;

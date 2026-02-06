@@ -24,6 +24,12 @@ export function createMainWindow(tray: Electron.Tray | null, isQuitting: () => b
     setupMessageCountMonitor(webContents, tray);
     setupNavigationHandlers(webContents);
 
+    // Reset message count when window gains focus
+    mainWindow.on('focus', () => {
+        log('Window focused - resetting message count');
+        resetMessageCount(tray);
+    });
+
     // Don't await - let ready-to-show event trigger
     mainWindow.loadURL(MESSENGER_URL);
 

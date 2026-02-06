@@ -8,7 +8,7 @@ export const WINDOW_CONFIG: Record<string, WindowConfig> = {
         height: 800,
         show: false,
         resizable: true,
-        autoHideMenuBar: true,
+        autoHideMenuBar: false,
         title: APP_TITLE,
         icon: path.join(__dirname, '../../assets/app.ico'),
     },
@@ -42,4 +42,5 @@ export const WEB_PREFERENCES = {
     contextIsolation: true,
     nodeIntegration: false,
     partition: 'persist:messenger',
+    preload: path.join(__dirname, '../preload/messenger.js'),
 };
