@@ -1,7 +1,7 @@
 {
   "name": "messenger-desktop",
-  "version": "1.1.1",
-  "main": "main.js",
+  "version": "1.0.1",
+  "main": "dist/main.js",
   "description": "Messenger Desktop",
   "author": "Xenius",
   "repository": {
@@ -9,24 +9,32 @@
     "url": "https://github.com/Xenius97/messenger-desktop"
   },
   "scripts": {
-    "start": "electron .",
-    "build": "electron-builder",
-    "build:installer": "electron-builder --win nsis",
-    "build:portable": "electron-builder --win portable"
+    "start": "npm run compile && electron .",
+    "dev": "tsc -w",
+    "compile": "tsc",
+    "build": "npm run compile && electron-builder",
+    "build:installer": "npm run compile && electron-builder --win nsis",
+    "build:portable": "npm run compile && electron-builder --win portable",
+    "publish": "npm run compile && electron-builder --win --publish always"
   },
   "devDependencies": {
+    "@types/node": "^20.19.32",
     "electron": "^30.0.0",
-    "electron-builder": "^24.0.0"
+    "electron-builder": "^24.0.0",
+    "typescript": "^5.9.3"
   },
   "build": {
     "appId": "com.messenger.desktop",
     "productName": "Messenger",
     "directories": {
-      "output": "dist"
+      "output": "build"
     },
     "files": [
-      "**/*",
-      "assets/**/*"
+      "dist/**/*",
+      "assets/**/*",
+      "!src",
+      "!tsconfig.json",
+      "!*.ts"
     ],
     "win": {
       "icon": "assets/app.ico"
@@ -45,7 +53,8 @@
     "publish": {
       "provider": "github",
       "owner": "Xenius97",
-      "repo": "messenger-desktop"
+      "repo": "messenger-desktop",
+      "releaseType": "release"
     }
   },
   "dependencies": {
