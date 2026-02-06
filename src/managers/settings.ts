@@ -7,12 +7,14 @@ interface AppSettings {
     autoUpdate: boolean;
     autoStartup: boolean;
     startMinimized: boolean;
+    minimizeToTray: boolean;
 }
 
 const DEFAULT_SETTINGS: AppSettings = {
     autoUpdate: true,
     autoStartup: false,
     startMinimized: false,
+    minimizeToTray: true,
 };
 
 let cachedSettings: AppSettings | null = null;

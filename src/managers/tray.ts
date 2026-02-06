@@ -1,6 +1,7 @@
 import { Tray, Menu, app, BrowserWindow } from 'electron';
 import path from 'path';
 import { resetMessageCount } from '../windows/main';
+import { getSettings } from './settings';
 
 export function createTray(
     mainWindow: BrowserWindow | null,
@@ -26,7 +27,7 @@ export function createTray(
     tray.setToolTip('Messenger');
     tray.setContextMenu(contextMenu);
 
-    tray.on('click', () => toggleMainWindow(mainWindow, tray));
+    tray.on('click', () => handleTrayClick(mainWindow, tray));
 
     return tray;
 }
@@ -37,6 +38,15 @@ function openMessenger(mainWindow: BrowserWindow | null, tray: Tray): void {
         mainWindow.setSkipTaskbar(false);
         mainWindow.focus();
         resetMessageCount(tray);
+    }
+}
+
+function handleTrayClick(mainWindow: BrowserWindow | null, tray: Tray): void {
+    const settings = getSettings();
+    if (settings.minimizeToTray) {
+        toggleMainWindow(mainWindow, tray);
+    } else {
+        openMessenger(mainWindow, tray);
     }
 }
 
