@@ -195,21 +195,21 @@ function setupNavigationHandlers(webContents: Electron.WebContents): void {
 export function takeQuickScreenshot(): void {
     if (!mainWindow) return;
     
-    log('Screenshot: Starting...');
+    // log('Screenshot: Starting...');
     
     const initialClipboard = clipboard.readImage();
     const initialHash = initialClipboard.isEmpty() ? '' : initialClipboard.toDataURL();
     
     mainWindow.minimize();
-    log('Screenshot: Window minimized');
+    // log('Screenshot: Window minimized');
     
     setTimeout(() => {
         if (process.platform === 'win32') {
             exec('cmd /c start ms-screenclip:', (error) => {
                 if (error) {
                     log('Screenshot: Failed to trigger screen clip: ' + error.message);
-                } else {
-                    log('Screenshot: Screen clip triggered');
+                // } else {
+                    // log('Screenshot: Screen clip triggered');
                 }
             });
         }
@@ -229,7 +229,7 @@ export function takeQuickScreenshot(): void {
             if (mainWindow) {
                 mainWindow.removeListener('focus', onFocusRestore);
             }
-            log('Screenshot: ' + reason);
+            // log('Screenshot: ' + reason);
             if (mainWindow) {
                 mainWindow.restore();
                 mainWindow.focus();
@@ -253,7 +253,7 @@ export function takeQuickScreenshot(): void {
                     }
                 })();
             `).then(() => {
-                log('Screenshot: Image pasted into chat input');
+                // log('Screenshot: Image pasted into chat input');
             }).catch((err) => {
                 log('Screenshot: Failed to paste: ' + err.message);
             });
