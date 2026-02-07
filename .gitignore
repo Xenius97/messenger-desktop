@@ -6,3 +6,4 @@ build
 .env
 *.tsbuildinfo
 package-lock.json
+temp
