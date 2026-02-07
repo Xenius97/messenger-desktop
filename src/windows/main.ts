@@ -275,7 +275,7 @@ export function takeQuickScreenshot(): void {
                 const currentHash = currentClipboard.toDataURL();
                 if (currentHash !== initialHash) {
                     restoreWindow('New image detected in clipboard');
-                    pasteIntoInput();
+                    setTimeout(pasteIntoInput, 400);
                     return;
                 }
             }
