@@ -6,11 +6,14 @@ import { startLoadingAnimation, stopLoadingAnimation } from '../utils/animation'
 import { updateTaskbarBadge } from '../utils/taskbar';
 import { createExternalWindow } from './external';
 import { log } from '../utils/logger';
-import { getSettings } from '../managers/settings';
+import { getSettings, setSetting } from '../managers/settings';
 
 let mainWindow: BrowserWindow | null = null;
 let lastMessageCount = 0;
 let isWindowFocused = false;
+let debugOutgoingListener: ((details: any) => void) | null = null;
+let debugHeadersListener: ((details: any, callback: any) => void) | null = null;
+let debugIncomingListener: ((details: any) => void) | null = null;
 
 export function createMainWindow(tray: Electron.Tray | null, isQuitting: () => boolean): BrowserWindow {
     mainWindow = new BrowserWindow({
@@ -184,4 +187,165 @@ function setupNavigationHandlers(webContents: Electron.WebContents): void {
             }
         }
     });
+}
+
+// Debug Outgoing Requests
+export function enableDebugOutgoing(): void {
+    if (!mainWindow) return;
+    
+    log('\n' + '='.repeat(80));
+    log('*** DEBUG OUTGOING: ENABLED ***');
+    log('Monitoring OUTGOING requests...');
+    log('='.repeat(80) + '\n');
+    
+    const session = mainWindow.webContents.session;
+    
+    // Remove existing listener if any
+    if (debugOutgoingListener) {
+        session.webRequest.onBeforeRequest(null);
+    }
+    if (debugHeadersListener) {
+        session.webRequest.onBeforeSendHeaders(null);
+    }
+    
+    // Monitor ALL outgoing requests
+    debugOutgoingListener = (details) => {
+        const url = details.url;
+        
+        // Skip non-Messenger/Facebook requests for cleaner log
+        if (!url.includes('messenger.com') && !url.includes('facebook.com')) {
+            return;
+        }
+        
+        log('\n' + '-'.repeat(80));
+        log('[OUTGOING REQUEST]');
+        log('Method: ' + details.method);
+        log('URL: ' + url);
+        log('Type: ' + details.resourceType);
+        
+        // Log request body if present (for POST requests)
+        if (details.uploadData) {
+            log('[Request Body]:');
+            details.uploadData.forEach((data: any) => {
+                if (data.bytes) {
+                    const bodyStr = Buffer.from(data.bytes).toString('utf-8');
+                    log(bodyStr.substring(0, 1000)); // First 1000 chars
+                    
+                    // Highlight important keywords
+                    if (bodyStr.match(/read|seen|delivery|receipt|typing|mark_read|change_read/i)) {
+                        log('!!! IMPORTANT: Contains read/seen/typing keywords !!!');
+                    }
+                }
+            });
+        }
+        
+        log('-'.repeat(80) + '\n');
+    };
+    
+    session.webRequest.onBeforeRequest({ urls: ['<all_urls>'] }, debugOutgoingListener);
+    
+    // Monitor request headers
+    debugHeadersListener = (details, callback) => {
+        const url = details.url;
+        
+        if (url.includes('messenger.com') || url.includes('facebook.com')) {
+            if (details.requestHeaders && Object.keys(details.requestHeaders).length > 0) {
+                log('[Request Headers] for: ' + url.split('?')[0]);
+                // Only log interesting headers
+                const interestingHeaders = ['content-type', 'authorization', 'x-fb-friendly-name'];
+                interestingHeaders.forEach(key => {
+                    if (details.requestHeaders[key]) {
+                        log('  ' + key + ': ' + details.requestHeaders[key]);
+                    }
+                });
+            }
+        }
+        
+        callback({ requestHeaders: details.requestHeaders });
+    };
+    
+    session.webRequest.onBeforeSendHeaders({ urls: ['<all_urls>'] }, debugHeadersListener);
+}
+
+export function disableDebugOutgoing(): void {
+    if (!mainWindow) return;
+    
+    log('\n' + '='.repeat(80));
+    log('*** DEBUG OUTGOING: DISABLED ***');
+    log('='.repeat(80) + '\n');
+    
+    const session = mainWindow.webContents.session;
+    
+    // Remove listeners
+    if (debugOutgoingListener) {
+        session.webRequest.onBeforeRequest(null);
+        debugOutgoingListener = null;
+    }
+    if (debugHeadersListener) {
+        session.webRequest.onBeforeSendHeaders(null);
+        debugHeadersListener = null;
+    }
+}
+
+// Debug Incoming Responses
+export function enableDebugIncoming(): void {
+    if (!mainWindow) return;
+    
+    log('*** DEBUG INCOMING: ENABLED ***');
+    
+    const session = mainWindow.webContents.session;
+    
+    // Remove existing listener if any
+    if (debugIncomingListener) {
+        session.webRequest.onCompleted(null);
+    }
+    
+    // Monitor responses
+    debugIncomingListener = (details) => {
+        const url = details.url;
+        
+        if (!url.includes('messenger.com') && !url.includes('facebook.com')) {
+            return;
+        }
+        
+        log('\n' + '-'.repeat(80));
+        log('[INCOMING RESPONSE]');
+        log('URL: ' + url);
+        log('Status: ' + details.statusCode);
+        log('Type: ' + details.resourceType);
+        
+        // Log response headers
+        if (details.responseHeaders) {
+            const contentType = details.responseHeaders['content-type']?.[0] || '';
+            if (contentType) {
+                log('Content-Type: ' + contentType);
+            }
+            
+            // Log other interesting headers
+            const interestingHeaders = ['x-fb-request-id', 'x-fb-trace-id'];
+            interestingHeaders.forEach(key => {
+                if (details.responseHeaders![key]) {
+                    log(key + ': ' + details.responseHeaders![key][0]);
+                }
+            });
+        }
+        
+        log('-'.repeat(80) + '\n');
+    };
+    
+    session.webRequest.onCompleted({ urls: ['<all_urls>'] }, debugIncomingListener);
+}
+
+export function disableDebugIncoming(): void {
+    if (!mainWindow) return;
+    
+    log('*** DEBUG INCOMING: DISABLED ***');
+    
+    const session = mainWindow.webContents.session;
+    
+    // Remove listener
+    if (debugIncomingListener) {
+        session.webRequest.onCompleted(null);
+        debugIncomingListener = null;
+    }
 }

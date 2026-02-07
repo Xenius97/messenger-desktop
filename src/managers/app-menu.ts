@@ -1,8 +1,9 @@
 import { Menu, MenuItem, BrowserWindow, app, dialog } from 'electron';
 import { autoUpdater } from 'electron-updater';
-import { APP_VERSION, APP_REPOSITORY } from '../config/constants';
+import { APP_VERSION, APP_REPOSITORY, APP_DESCRIPTION } from '../config/constants';
 import { log } from '../utils/logger';
 import { getSettings, setSetting, isPortable } from '../managers/settings';
+import { enableDebugOutgoing, disableDebugOutgoing, enableDebugIncoming, disableDebugIncoming } from '../windows/main';
 
 export function createAppMenu(mainWindow: BrowserWindow | null): Menu {
     const settings = getSettings();
@@ -171,8 +172,7 @@ export function createAppMenu(mainWindow: BrowserWindow | null): Menu {
                 },
                 { type: 'separator' },
                 { role: 'reload' },
-                { role: 'forceReload' },
-                { role: 'toggleDevTools' }
+                { role: 'forceReload' }
             ]
         },
         {
@@ -185,7 +185,7 @@ export function createAppMenu(mainWindow: BrowserWindow | null): Menu {
                             type: 'info',
                             title: 'About Messenger',
                             message: 'Messenger Desktop',
-                            detail: 'A desktop application for Messenger\n\nCreated by: Komjáti János ("Xenius")\nEmail: xeniusnow@gmail.com\n\nVersion: ' + APP_VERSION,
+                            detail: APP_DESCRIPTION,
                             buttons: ['Close']
                         });
                     }
@@ -199,7 +199,46 @@ export function createAppMenu(mainWindow: BrowserWindow | null): Menu {
             ]
         }
     ];
-
+    
+    // Add Developer menu only in development mode
+    if (isDevMode) {
+        const helpMenuIndex = template.findIndex((item: any) => item.label === 'Help');
+        if (helpMenuIndex > 0) {
+            template.splice(helpMenuIndex, 0, {
+                label: 'Developer',
+                submenu: [
+                    {
+                        label: 'Debug Outgoing Requests',
+                        type: 'checkbox',
+                        click: (menuItem: MenuItem) => {
+                            if (menuItem.checked) {
+                                enableDebugOutgoing();
+                            } else {
+                                disableDebugOutgoing();
+                            }
+                        }
+                    },
+                    {
+                        label: 'Debug Incoming Responses',
+                        type: 'checkbox',
+                        click: (menuItem: MenuItem) => {
+                            if (menuItem.checked) {
+                                enableDebugIncoming();
+                            } else {
+                                disableDebugIncoming();
+                            }
+                        }
+                    },
+                    { type: 'separator' },
+                    {
+                        role: 'toggleDevTools',
+                        label: 'Toggle DevTools',
+                        accelerator: 'F12'
+                    }
+                ]
+            });
+        }
+    }
     const menu = Menu.buildFromTemplate(template as any);
     return menu;
 }

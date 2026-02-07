@@ -1,6 +1,7 @@
 export const APP_TITLE = 'Messenger';
 export const APP_VERSION = require('../../package.json').version;
 export const APP_REPOSITORY = require('../../package.json').repository.url;
+export const APP_DESCRIPTION = 'A desktop application for Messenger\n\nCreated by: Komjáti János ("Xenius")\nEmail: xeniusnow@gmail.com\n\nVersion: ' + APP_VERSION;
 export const MESSENGER_URL = 'https://www.messenger.com/login/';
 export const LOADING_ANIMATION_INTERVAL = 200;
 export const LOADING_DOT_COUNT = 4;
