@@ -1,6 +1,6 @@
 {
   "name": "messenger-desktop",
-  "version": "1.1.7",
+  "version": "1.1.8",
   "main": "dist/main.js",
   "description": "Messenger Desktop",
   "author": "Xenius",
