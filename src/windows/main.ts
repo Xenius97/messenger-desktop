@@ -1,4 +1,4 @@
-import { BrowserWindow, Menu, shell, Session, app } from 'electron';
+import { BrowserWindow, Menu, shell, Session, app, clipboard, globalShortcut } from 'electron';
 import { WINDOW_CONFIG, WEB_PREFERENCES } from '../config/windows';
 import { MESSENGER_URL, APP_TITLE } from '../config/constants';
 import { isMessengerUrl, isFacebookUrl } from '../utils/url';
@@ -7,6 +7,7 @@ import { updateTaskbarBadge } from '../utils/taskbar';
 import { createExternalWindow } from './external';
 import { log } from '../utils/logger';
 import { getSettings, setSetting } from '../managers/settings';
+import { exec } from 'child_process';
 
 let mainWindow: BrowserWindow | null = null;
 let lastMessageCount = 0;
@@ -14,6 +15,7 @@ let isWindowFocused = false;
 let debugOutgoingListener: ((details: any) => void) | null = null;
 let debugHeadersListener: ((details: any, callback: any) => void) | null = null;
 let debugIncomingListener: ((details: any) => void) | null = null;
+let screenshotMonitorInterval: NodeJS.Timeout | null = null;
 
 export function createMainWindow(tray: Electron.Tray | null, isQuitting: () => boolean): BrowserWindow {
     mainWindow = new BrowserWindow({
@@ -187,6 +189,105 @@ function setupNavigationHandlers(webContents: Electron.WebContents): void {
             }
         }
     });
+}
+
+// Screenshot Tool
+export function takeQuickScreenshot(): void {
+    if (!mainWindow) return;
+    
+    log('Screenshot: Starting...');
+    
+    const initialClipboard = clipboard.readImage();
+    const initialHash = initialClipboard.isEmpty() ? '' : initialClipboard.toDataURL();
+    
+    mainWindow.minimize();
+    log('Screenshot: Window minimized');
+    
+    setTimeout(() => {
+        if (process.platform === 'win32') {
+            exec('cmd /c start ms-screenclip:', (error) => {
+                if (error) {
+                    log('Screenshot: Failed to trigger screen clip: ' + error.message);
+                } else {
+                    log('Screenshot: Screen clip triggered');
+                }
+            });
+        }
+        
+        let checkCount = 0;
+        let maxChecks = 75;
+        let clipStarted = false;
+
+        const restoreWindow = (reason: string) => {
+            if (screenshotMonitorInterval) {
+                clearInterval(screenshotMonitorInterval);
+                screenshotMonitorInterval = null;
+            }
+            if (globalShortcut.isRegistered('Escape')) {
+                globalShortcut.unregister('Escape');
+            }
+            if (mainWindow) {
+                mainWindow.removeListener('focus', onFocusRestore);
+            }
+            log('Screenshot: ' + reason);
+            if (mainWindow) {
+                mainWindow.restore();
+                mainWindow.focus();
+            }
+        };
+
+        const onFocusRestore = () => {
+            restoreWindow('Canceled by focus');
+        };
+
+        const pasteIntoInput = () => {
+            if (!mainWindow) return;
+            mainWindow.webContents.executeJavaScript(`
+                (function() {
+                    const input = document.querySelector('[contenteditable="true"][role="textbox"]');
+                    if (input) {
+                        input.focus();
+                        setTimeout(() => {
+                            document.execCommand('paste');
+                        }, 100);
+                    }
+                })();
+            `).then(() => {
+                log('Screenshot: Image pasted into chat input');
+            }).catch((err) => {
+                log('Screenshot: Failed to paste: ' + err.message);
+            });
+        };
+
+        if (mainWindow)
+            mainWindow.once('focus', onFocusRestore);
+
+        if (globalShortcut.isRegistered('Escape'))
+            globalShortcut.unregister('Escape');
+        
+        globalShortcut.register('Escape', () => {
+            restoreWindow('Canceled by ESC');
+        });
+
+        screenshotMonitorInterval = setInterval(() => {
+            checkCount++;
+
+            if (clipStarted && checkCount > maxChecks) {
+                restoreWindow('Timeout - no screenshot detected');
+                return;
+            }
+            
+            const currentClipboard = clipboard.readImage();
+            if (!currentClipboard.isEmpty()) {
+                const currentHash = currentClipboard.toDataURL();
+                if (currentHash !== initialHash) {
+                    restoreWindow('New image detected in clipboard');
+                    pasteIntoInput();
+                    return;
+                }
+            }
+        }, 200);
+    }, 500);
 }
 
 // Debug Outgoing Requests

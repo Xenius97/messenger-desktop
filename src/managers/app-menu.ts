@@ -3,7 +3,7 @@ import { autoUpdater } from 'electron-updater';
 import { APP_VERSION, APP_REPOSITORY, APP_DESCRIPTION } from '../config/constants';
 import { log } from '../utils/logger';
 import { getSettings, setSetting, isPortable } from '../managers/settings';
-import { enableDebugOutgoing, disableDebugOutgoing, enableDebugIncoming, disableDebugIncoming } from '../windows/main';
+import { enableDebugOutgoing, disableDebugOutgoing, enableDebugIncoming, disableDebugIncoming, takeQuickScreenshot } from '../windows/main';
 
 export function createAppMenu(mainWindow: BrowserWindow | null): Menu {
     const settings = getSettings();
@@ -173,6 +173,18 @@ export function createAppMenu(mainWindow: BrowserWindow | null): Menu {
                 { type: 'separator' },
                 { role: 'reload' },
                 { role: 'forceReload' }
+            ]
+        },
+        {
+            label: 'Tools',
+            submenu: [
+                {
+                    label: 'Quick Screenshot',
+                    accelerator: 'CmdOrCtrl+Shift+S',
+                    click: () => {
+                        takeQuickScreenshot();
+                    }
+                }
             ]
         },
         {
