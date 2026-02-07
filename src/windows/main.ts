@@ -6,12 +6,11 @@ import { startLoadingAnimation, stopLoadingAnimation } from '../utils/animation'
 import { updateTaskbarBadge } from '../utils/taskbar';
 import { createExternalWindow } from './external';
 import { log } from '../utils/logger';
-import { getSettings, setSetting } from '../managers/settings';
+import { getSettings } from '../managers/settings';
 import { exec } from 'child_process';
 
 let mainWindow: BrowserWindow | null = null;
 let lastMessageCount = 0;
-let isWindowFocused = false;
 let debugOutgoingListener: ((details: any) => void) | null = null;
 let debugHeadersListener: ((details: any, callback: any) => void) | null = null;
 let debugIncomingListener: ((details: any) => void) | null = null;
@@ -35,12 +34,6 @@ export function createMainWindow(tray: Electron.Tray | null, isQuitting: () => b
     mainWindow.on('focus', () => {
         // log('Window focused - resetting message count');
         resetMessageCount(tray);
-        isWindowFocused = true;
-    });
-
-    mainWindow.on('blur', () => {
-        // log('Window blurred');
-        isWindowFocused = false;
     });
     
     // Don't await - let ready-to-show event trigger
