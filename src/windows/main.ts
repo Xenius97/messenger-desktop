@@ -120,31 +120,33 @@ function setupLoadingIndicators(webContents: Electron.WebContents): void {
 
 function setupMessageCountMonitor(webContents: Electron.WebContents, tray: Electron.Tray | null): void {
     webContents.on('page-title-updated', (event, title) => {
-        if (isWindowFocused) {
-            log('Window is focused - skipping message count update');
-            resetMessageCount(tray);
-            return;
-        }
         const match = title.match(/\((\d+)\)/);
 
         if (match) {
-            lastMessageCount++;
-            log('Sending notification for ' + lastMessageCount + ' new messages');
-            if (process.platform === 'win32' && tray && !tray.isDestroyed()) {
-                tray.displayBalloon({
-                    title: 'Messenger',
-                    content: `${lastMessageCount} new message${lastMessageCount > 1 ? 's' : ''} received`,
-                    icon: WINDOW_CONFIG.main.icon as string
-                });
+            const messageCount = parseInt(match[1], 10);
+            log('Message count detected:' + messageCount + ', Last count:' + lastMessageCount);
+
+            if (messageCount > lastMessageCount && lastMessageCount >= 0) {
+                const newMessages = messageCount - lastMessageCount;
+                log('Sending notification for ' + newMessages + ' new messages');
+
+                if (process.platform === 'win32' && tray && !tray.isDestroyed()) {
+                    tray.displayBalloon({
+                        title: 'Messenger',
+                        content: `${newMessages} new message${newMessages > 1 ? 's' : ''} received`,
+                        icon: WINDOW_CONFIG.main.icon as string
+                    });
+                }
             }
 
+            lastMessageCount = messageCount;
 
             if (tray && !tray.isDestroyed()) {
-                tray.setToolTip(lastMessageCount > 0 ? `Messenger (${lastMessageCount} unread)` : 'Messenger');
+                tray.setToolTip(messageCount > 0 ? `Messenger (${messageCount} unread)` : 'Messenger');
             }
 
             if (process.platform === 'win32') {
-                updateTaskbarBadge(mainWindow, lastMessageCount);
+                updateTaskbarBadge(mainWindow, messageCount);
             }
         } else if (title === APP_TITLE) {
             lastMessageCount = 0;
