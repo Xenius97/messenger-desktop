@@ -35,7 +35,6 @@ export function createTray(
 function openMessenger(mainWindow: BrowserWindow | null, tray: Tray): void {
     if (mainWindow) {
         mainWindow.show();
-        mainWindow.setSkipTaskbar(false);
         mainWindow.focus();
         resetMessageCount(tray);
     }
@@ -55,9 +54,6 @@ function toggleMainWindow(mainWindow: BrowserWindow | null, tray: Tray): void {
 
     if (mainWindow.isVisible()) {
         mainWindow.hide();
-        if (process.platform === 'win32') {
-            mainWindow.setSkipTaskbar(true);
-        }
     } else {
         openMessenger(mainWindow, tray);
     }

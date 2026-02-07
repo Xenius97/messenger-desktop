@@ -50,9 +50,6 @@ export function createMainWindow(tray: Electron.Tray | null, isQuitting: () => b
             const currentSettings = getSettings();
             if (currentSettings.minimizeToTray) {
                 mainWindow.hide();
-                if (process.platform === 'win32') {
-                    mainWindow.setSkipTaskbar(true);
-                }
             } else {
                 app.quit();
             }
