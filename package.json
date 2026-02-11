@@ -10,7 +10,9 @@
   },
   "scripts": {
     "start": "npm run compile && electron .",
-    "dev": "tsc -w",
+    "dev": "concurrently \"npm run dev:tsc\" \"npm run dev:electron\"",
+    "dev:tsc": "tsc -w",
+    "dev:electron": "nodemon --watch dist --exec \"electron .\"",
     "compile": "tsc",
     "build": "npm run compile && electron-builder",
     "build:installer": "npm run compile && electron-builder --win nsis",
@@ -19,8 +21,10 @@
   },
   "devDependencies": {
     "@types/node": "^20.19.32",
+    "concurrently": "^9.2.1",
     "electron": "^30.5.1",
     "electron-builder": "^24.13.3",
+    "nodemon": "^3.1.11",
     "typescript": "^5.9.3"
   },
   "build": {
