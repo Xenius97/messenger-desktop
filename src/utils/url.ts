@@ -5,7 +5,9 @@
 export function isMessengerUrl(url: string): boolean {
     try {
         const parsedUrl = new URL(url);
-        console.log('Parsed URL:', parsedUrl.hostname);
+        if (parsedUrl.pathname.includes('/share/'))
+            return false;
+
         return parsedUrl.hostname === 'messenger.com' || parsedUrl.hostname === 'www.messenger.com';
     } catch (error) {
         return false;
@@ -15,7 +17,9 @@ export function isMessengerUrl(url: string): boolean {
 export function isFacebookUrl(url: string): boolean {
     try {
         const parsedUrl = new URL(url);
-        console.log('Parsed URL:', parsedUrl.hostname);
+        if (parsedUrl.pathname.includes('/share/'))
+            return false;
+            
         return parsedUrl.hostname === 'facebook.com' || parsedUrl.hostname === 'www.facebook.com';
     } catch (error) {
         return false;
