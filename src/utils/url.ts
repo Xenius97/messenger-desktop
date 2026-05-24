@@ -22,7 +22,6 @@ export function isFacebookMessagesUrl(url: string): boolean {
                               parsedUrl.pathname.startsWith('/login') || // Login page
                               parsedUrl.pathname.startsWith('/checkpoint') || // Security checkpoint
                               parsedUrl.pathname.startsWith('/two_factor') || // Two-factor authentication
-                              parsedUrl.pathname.startsWith('/messenger_media') || // Messenger media
                               parsedUrl.pathname.startsWith('/two_step_verification'); // Two-step verification
         
         return isMessagesPath && !parsedUrl.pathname.includes('/share/');
