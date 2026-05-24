@@ -1,7 +1,7 @@
 import { BrowserWindow, Menu, shell, Session, app, clipboard, globalShortcut } from 'electron';
 import { WINDOW_CONFIG, WEB_PREFERENCES } from '../config/windows';
 import { MESSENGER_URL, APP_TITLE } from '../config/constants';
-import { isFacebookMessagesUrl } from '../utils/url';
+import { isMessengerUrl, isFacebookUrl } from '../utils/url';
 import { startLoadingAnimation, stopLoadingAnimation } from '../utils/animation';
 import { updateTaskbarBadge } from '../utils/taskbar';
 import { createExternalWindow } from './external';
@@ -29,7 +29,6 @@ export function createMainWindow(tray: Electron.Tray | null, isQuitting: () => b
     setupLoadingIndicators(webContents);
     setupMessageCountMonitor(webContents, tray);
     setupNavigationHandlers(webContents);
-    setupErrorHandler(webContents);
     
     // Reset message count when window gains focus
     mainWindow.on('focus', () => {
@@ -74,9 +73,7 @@ export function resetMessageCount(tray: Electron.Tray | null): void {
 
 function setupPermissionHandler(session: Session): void {
     session.setPermissionRequestHandler((webContents, permission, callback) => {
-        // Allow notifications, media (camera, microphone) for calls
-        const allowedPermissions = ['notifications', 'media', 'microphone', 'camera'];
-        callback(allowedPermissions.includes(permission));
+        callback(permission === 'notifications');
     });
 }
 
@@ -163,81 +160,25 @@ function setupMessageCountMonitor(webContents: Electron.WebContents, tray: Elect
 }
 
 function setupNavigationHandlers(webContents: Electron.WebContents): void {
-    // Check if user is logged in by looking for Facebook session cookies
-    const checkIfLoggedIn = async (): Promise<boolean> => {
-        try {
-            const cookies = await webContents.session.cookies.get({ domain: '.facebook.com' });
-            // Check for c_user cookie which indicates logged in user
-            const cUserCookie = cookies.find(cookie => cookie.name === 'c_user');
-            return !!cUserCookie;
-        } catch (error) {
-            return false;
-        }
-    };
-    
     webContents.setWindowOpenHandler(({ url }) => {
-        log('Window open request:', url);
-        
-        if (isFacebookMessagesUrl(url)) {
-            log('Allowing URL in app:', url);
-            return { 
-                action: 'allow',
-                overrideBrowserWindowOptions: {
-                    icon: WINDOW_CONFIG.main.icon as string,
-                    title: 'Messenger Call'
-                }
-            };
+        if (isMessengerUrl(url)) {
+            return { action: 'allow' };
         }
-        // Open non-messages links externally
-        log('Opening URL externally:', url);
+        if (isFacebookUrl(url)) {
+            createExternalWindow(url);
+            return { action: 'deny' };
+        }
         shell.openExternal(url);
         return { action: 'deny' };
     });
-    
-    // Set icon for newly created windows (calls)
-    webContents.on('did-create-window', (window) => {
-        window.setIcon(WINDOW_CONFIG.main.icon as string);
-    });
-    
-    // Handle SPA navigation - only restrict if logged in
-    webContents.on('did-navigate-in-page', async (event, url) => {
-        const isLoggedIn = await checkIfLoggedIn();
-        
-        if (isLoggedIn && !isFacebookMessagesUrl(url)) {
-            // Logged in and navigating away from messages -> block and open externally
-            if (webContents.canGoBack()) {
-                webContents.goBack();
-            }
-            shell.openExternal(url);
-            log('Blocked in-page navigation (logged in):', url);
-        }
-        // If not logged in, allow all navigation for login flow
-    });
-}
 
-function setupErrorHandler(webContents: Electron.WebContents): void {
-    webContents.on('did-fail-load', async (event, errorCode, errorDescription, validatedURL) => {
-        // ERR_TOO_MANY_REDIRECTS = -310
-        if (errorCode === -310) {
-            log('ERR_TOO_MANY_REDIRECTS detected - clearing cache and cookies...');
-            
-            try {
-                // Clear cache and storage data
-                await webContents.session.clearCache();
-                await webContents.session.clearStorageData({
-                    storages: ['cookies', 'localstorage', 'indexdb', 'serviceworkers', 'cachestorage']
-                });
-                
-                log('Cache and cookies cleared - restarting...');
-                
-                // Wait a bit then reload
-                setTimeout(() => {
-                    if (mainWindow && !mainWindow.isDestroyed()) {
-                        mainWindow.loadURL(MESSENGER_URL);
-                    }
-                }, 1000);
-            } catch (error) {
-                log('Failed to clear cache:', error);
+    webContents.on('will-navigate', (event, url) => {
+        if (!isMessengerUrl(url)) {
+            event.preventDefault();
+            if (isFacebookUrl(url)) {
+                createExternalWindow(url);
+            } else {
+                shell.openExternal(url);
             }
         }
     });

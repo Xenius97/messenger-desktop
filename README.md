@@ -7,7 +7,6 @@
 - 🔄 Automatic updates via GitHub Releases
 - 🎨 System tray integration
 - 📦 Portable and installer versions
-- 🥳 Works after 2026 April 16 update
 
 ## Development
 
@@ -41,3 +40,8 @@ npm run build:installer
 # Build portable version
 npm run build:portable
 ```
+
+## Known Issues
+
+- 2FA can be tricky - use SMS verification if login fails
+- Make sure to check "remember me" during login

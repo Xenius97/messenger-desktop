@@ -1,6 +1,6 @@
 import { BrowserWindow, shell, Session } from 'electron';
 import { WINDOW_CONFIG, WEB_PREFERENCES } from '../config/windows';
-import { isFacebookMessagesUrl } from '../utils/url';
+import { isMessengerUrl, isFacebookUrl } from '../utils/url';
 
 export function createExternalWindow(url: string): BrowserWindow {
     const externalWindow = new BrowserWindow({
@@ -26,11 +26,10 @@ function setupPermissionHandler(session: Session): void {
 
 function setupNavigationHandlers(webContents: Electron.WebContents, window: BrowserWindow): void {
     const handleNavigation = (event: Electron.Event, url: string) => {
-        if (isFacebookMessagesUrl(url)) {
+        if (isMessengerUrl(url)) {
             event.preventDefault();
             redirectToMainWindow(url, window);
-        } else {
-            // Open everything else in external browser
+        } else if (!isFacebookUrl(url)) {
             event.preventDefault();
             shell.openExternal(url);
             if (!window.isDestroyed()) {
@@ -43,9 +42,9 @@ function setupNavigationHandlers(webContents: Electron.WebContents, window: Brow
     webContents.on('did-redirect-navigation', handleNavigation);
 
     webContents.on('did-navigate', (event, url) => {
-        if (isFacebookMessagesUrl(url)) {
+        if (isMessengerUrl(url)) {
             redirectToMainWindow(url, window);
-        } else {
+        } else if (!isFacebookUrl(url)) {
             shell.openExternal(url);
             if (!window.isDestroyed()) {
                 window.close();
